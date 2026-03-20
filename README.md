@@ -61,7 +61,7 @@ Each defect module uses a standardized function signature: `def check(dimensions
 
 ## Repository Architecture & API Reference
 
-[cite_start]The project follows a modular architecture ensuring a strict separation of concerns between physics, data management, and visualization.
+The project follows a modular architecture ensuring a strict separation of concerns between physics, data management, and visualization.
 
 ### Physics Engine (`src/physics.py`)
 * **`compute_printability_map`**: Master function that evaluates a $P-v$ grid and applies defect priority mapping.
