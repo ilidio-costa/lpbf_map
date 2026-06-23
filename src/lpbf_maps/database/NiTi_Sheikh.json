@@ -1,0 +1,10 @@
+{
+    "name": "NiTi",
+    "density": 6471,
+    "specific_heat": 571.8,
+    "thermal_conductivity": 29.62,
+    "boiling_temperature": 3033,
+    "melting_temperature": 1583,
+    "absorptivity": 0.56,
+    "electrical_resistivity": 8.2e-8
+}

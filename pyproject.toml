@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lpbf-maps"
+version = "0.1.0"
+authors = [
+  { name="Ilidio Costa" },
+]
+description = "A predictive analytical modeling library for L-PBF processing maps."
+readme = "README.md"
+license = "GPL-3.0-only"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+keywords = ["L-PBF", "additive manufacturing", "melt pool", "printability", "processing maps"]
+dependencies = [
+    "numpy>=1.22.0",
+    "scipy>=1.8.0",
+    "matplotlib>=3.5.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/ilidio-costa/L-PBF-Processing-Maps-Predictive-Analytical-Modelling"
+Issues = "https://github.com/ilidio-costa/L-PBF-Processing-Maps-Predictive-Analytical-Modelling/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "build",
+    "twine"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["lpbf_maps", "lpbf_maps.defects", "lpbf_maps.database"]
+
+[tool.setuptools.package-data]
+"lpbf_maps.database" = ["*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

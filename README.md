@@ -1,6 +1,6 @@
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![v1.0.0](https://img.shields.io/badge/version-1.0.0--alpha-yellow.svg)](https://github.com/ilidio-costa/L-PBF-Processing-Maps-Predictive-Analytical-Modelling/releases)
+[![v0.1.0](https://img.shields.io/badge/version-0.1.0-yellow.svg)](https://github.com/ilidio-costa/L-PBF-Processing-Maps-Predictive-Analytical-Modelling/releases)
 
 # Predictive Modeling Of L-PBF Printability Maps
 
@@ -20,7 +20,8 @@ The optimization of Laser Powder Bed Fusion (L-PBF) processing parameters is fre
 Clone the repository and install the core dependencies:
 ```bash
 git clone https://github.com/ilidio-costa/L-PBF-Processing-Maps-Predictive-Analytical-Modelling.git
-pip install numpy scipy matplotlib
+cd L-PBF-Processing-Maps-Predictive-Analytical-Modelling
+pip install -e .
 ```
 ## Theoretical Framework
 
@@ -34,28 +35,25 @@ To capture the complex heat transfer regimes in L-PBF, the engine employs a hybr
 
 ### Defect Evaluation Criteria
 
-The printability of a specific parameter set is defined by the simultaneous avoidance of multiple competing defect regimes. Each analytical criterion is encapsulated within an isolated Python module in the `src/defects/` directory and adheres to a standardized API. This modularity allows the framework to evaluate each physical instability independently while maintaining a unified hierarchical logic for final visualization.
+The printability of a specific parameter set is defined by the simultaneous avoidance of multiple competing defect regimes. Each analytical criterion is encapsulated within an isolated Python module in the `src/lpbf_maps/defects/` directory and adheres to a standardized API. This modularity allows the framework to evaluate each physical instability independently while maintaining a unified hierarchical logic for final visualization.
 
 The table below details the current defect modules, their underlying analytical models, and the mathematical conditions they evaluate:
 
 ### Algorithmic Implementation of Defect Criteria
-| Defect Type | Analytical Model | Python Module | Defect Condition (Returns `True`) |
-| :--- | :--- | :--- | :--- |
-| **Balling** | Plateau-Rayleigh | `ball01.py` | $L/W \ge 2.3$ |
-| **Balling** | Yadroitsev Stability | `ball02.py` | $\frac{\pi W}{L} \le \sqrt{\frac{2}{3}}$ |
-| **Lack of Fusion** | Depth-to-Layer Ratio | `lof01.py` | $D \le t$  |
-| **Lack of Fusion** | Geometric Overlap | `lof02.py` | $(\frac{h}{W})^2 + \frac{t}{t+D} \ge 1.0$  |
-| **Lack of Fusion** | Depth-to-Layer Ratio | `lof03.py` | $D/t > 1.5$  |
-| **Keyholing** | King Keyhole Criteria | `key01.py` | $A \cdot P > \pi \rho C_p T_m \sqrt{\alpha v a^3} \cdot \frac{\pi T_b}{T_m}$  |
-| **Keyholing** | Geometric Ratio | `key02.py` | $W/D < 2.0$  |
-| **Keyholing** | Geometric Ratio | `key03.py` | $W/D < 1.5$  |
-| **Keyholing** | Geometric Ratio | `key04.py` | $W/D < 2.75$  |
-| **Keyholing** | Gan Keyhole Criteria | `key05.py` | $Ke = \frac{A \cdot P}{(T_m - T_0) \pi \rho C_p \sqrt{\alpha v a^3}} > 6.0$ |
+| Defect Type | Analytical Model | Python Module | Legacy Name | Defect Condition (Returns `True`) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Balling** | Plateau-Rayleigh | `balling.py` | `ball01.py` | $length/width \ge 2.3$ |
+| **Balling** | Yadroitsev Stability | `balling_yadroitsev.py` | `ball02.py` | $(\pi \cdot width/length) \le \sqrt{2/3}$ |
+| **Lack of Fusion** | Geometric Overlap | `lof.py` | `lof02.py`, `lof04.py` | $(hatch\_spacing/width)^2 + layer\_thickness/depth \ge 1.0$  |
+| **Lack of Fusion** | Depth-to-Layer Ratio | `lof_depth_ratio.py` | `lof01.py`, `lof03.py` | $depth \le layer\_thickness \cdot threshold$  |
+| **Keyholing** | Geometric Ratio | `keyhole_geometric.py` | `key02.py`, `key03.py`, `key04.py` | $width/depth < threshold$  |
+| **Keyholing** | King Normalized Enthalpy | `keyhole_king.py` | `key01.py` | $\frac{A \cdot P}{\pi \rho C_p T_m \sqrt{\alpha v a^3}} > \frac{\pi T_b}{T_m}$  |
+| **Keyholing** | Gan Universal | `keyhole_gan.py` | `key05.py` | $\frac{A \cdot P}{(T_m - T_{amb}) \pi \rho C_p \sqrt{\alpha v a^3}} > 6.0$  |
 
 ### Modular API and Priority Mapping
-Each defect module uses a standardized function signature: `def check(dimensions, process_parameters, material) -> bool`. This enables the core physics engine to:
+Each defect module inherits from `DefectCriterion` and uses a standardized class method: `def check(self, melt_pool, idx) -> bool`. This enables the core physics engine to:
 * **Perform Isolated Evaluations**: Individual boundaries can be verified independently to confirm specific mathematical thresholds without interference from overlapping regimes.
-* **Route Defect Priority**: In regions where multiple conditions are met, a priority-routing algorithm determines the dominant mechanism for visualization in the printability map.
+* **Route Defect Priority**: In regions where multiple conditions are met, a priority-routing algorithm (`DefectSuite`) determines the dominant mechanism for visualization in the printability map.
 * **Integrate Uncertainty**: Results can be normalized into model probabilities using a softmax function, identifying regions where predictive uncertainty is high (e.g., when models yield conflicting results).
 
 
@@ -63,66 +61,56 @@ Each defect module uses a standardized function signature: `def check(dimensions
 
 The project follows a modular architecture ensuring a strict separation of concerns between physics, data management, and visualization.
 
-### Physics Engine (`src/physics.py`)
-* **`compute_printability_map`**: Master function that evaluates a $P-v$ grid and applies defect priority mapping.
-* **`calculate_melt_pool_dimensions`**: Hybrid wrapper resolving surface dimensions via Rubenchik/Eagar-Tsai and depth via the maximum envelope of Gladush-Smurov and Eagar-Tsai.
-* **`get_rubenchik_dimensions`**: Performs bounded numerical optimization to extract exact $L$, $W$, and $D$ from the dimensionless temperature field.
+### Physics Engine (`src/lpbf_maps/meltpool.py` & `printability.py`)
+* **`PrintabilitySpace`**: Master orchestrator that evaluates a $P-v$ grid using lazy evaluation and applies defect priority mapping.
+* **`MeltPool`**: Hybrid wrapper resolving surface dimensions via Rubenchik/Eagar-Tsai and depth via the maximum envelope of Gladush-Smurov and Eagar-Tsai. Dimensions are calculated lazily.
 
-### Visualization Suite (`src/plots.py`)
-* **`plot_deterministic_map`**: Renders pre-computed defect matrices using Gaussian-smoothed contours.
+### Visualization Suite (`src/lpbf_maps/printability_plots.py` & `meltpool_plots.py`)
+* **`plot_2d_printability_map`**: Renders pre-computed defect matrices using Gaussian-smoothed contours.
 
 <div align="center">
   <img src="images/printability_map.png" alt="printability_map" width="400">
 </div align="left">
 
-* **`plot_safe_zone_evolution`**: A multidimensional engine for "Third Axis" evaluation (e.g., sensitivity to $T_{ambient}$, spot size, or layer thickness).
+* **`plot_3d_safe_zone_evolution`**: A multidimensional engine for "Third Axis" evaluation (e.g., sensitivity to $T_{ambient}$, spot size, or layer thickness).
 
 <div align="center">
   <img src="images/printability_map_z_axis.png" alt="printability_map_z_axis" width="400">
 </div align="left">
 
-* **`plot_all_zones_evolution`**: A multidimensional engine for "Third Axis" evaluation (e.g., sensitivity to $T_{ambient}$, spot size, or layer thickness).
-
-<div align="center">
-  <img src="images/printability_map_z_axis_all.png" alt="printability_map_z_axis" width="400">
-</div align="left">
-
-* **`top_view_eagar_tsai` / `side_view_rubenchik`**: Generates high-fidelity cross-sectional thermal profiles of the melt pool.
+* **`plot_dimensions_2d`**: Generates high-fidelity 2D contour maps of the melt pool dimensions (Length, Width, Depth).
 
 <div align="center">
   <img src="images/eagar_tsai.png" alt="melt pool" width="400">
 </div align="left">
 
-### Material Management (`src/data_loader.py`)
-* **`load_material`**: Parses JSON files to calculate derived properties like thermal diffusivity ($\alpha = k / (\rho C_p)$).
-* **`calculate_dynamic_absorptivity`**: Estimates laser coupling using the Hagen-Rubens approximation.
+### Material Management (`src/lpbf_maps/materials.py`)
+* **`Material.from_library()`**: Parses JSON files to calculate derived properties.
 
 ### Material JSON Structure
-To ensure physical accuracy, thermophysical properties (Density, Specific Heat, and Thermal Conductivity) should be extracted at or near the material's melting point. Material files in the `materials/` directory follow this structure:
+To ensure physical accuracy, thermophysical properties (Density, Specific Heat, and Thermal Conductivity) should be extracted at or near the material's melting point. Material files in the `src/lpbf_maps/database/` directory follow this structure:
 
 ```json
 {
     "name": "NiTi",
-    "rho": 6100,
-    "C_p": 510,
-    "k": 4.4,
-    "T_b": 3033,
-    "T_m": 1583,
-    "A": 0.32,
-    "alpha": 8e-6,
+    "density": 6100,
+    "specific_heat": 510,
+    "thermal_conductivity": 4.4,
+    "boiling_temperature": 3033,
+    "melting_temperature": 1583,
+    "absorptivity": 0.32,
     "electrical_resistivity": 8.2e-7
 }
 ```
 
 | JSON Key | Description | Symbol | Units |
 | :--- | :--- | :---: | :--- |
-| `rho` | Density | $\rho$ | $kg/m^{3}$ |
-| `C_p` | Specific Heat Capacity | $C_{p}$ | $J/(kg \cdot K)$  |
-| `k` | Thermal Conductivity | $k$ | $W/(m \cdot K)$  |
-| `T_b` | Boiling Temperature | $T_{b}$ | $K$  |
-| `T_m` | Melting Temperature | $T_{m}$ | $K$  |
-| `A` | Laser Absorptivity | $A$ | Dimensionless  |
-| `alpha` | Thermal Diffusivity | $\alpha$ | $m^{2}/s$ |
+| `density` | Density | $\rho$ | $kg/m^{3}$ |
+| `specific_heat` | Specific Heat Capacity | $C_{p}$ | $J/(kg \cdot K)$  |
+| `thermal_conductivity` | Thermal Conductivity | $k$ | $W/(m \cdot K)$  |
+| `boiling_temperature` | Boiling Temperature | $T_{b}$ | $K$  |
+| `melting_temperature` | Melting Temperature | $T_{m}$ | $K$  |
+| `absorptivity` | Laser Absorptivity | $A$ | Dimensionless  |
 | `electrical_resistivity` | Electrical Resistivity | $\rho_{e}$ | $\Omega \cdot m$  |
 
 ## References
