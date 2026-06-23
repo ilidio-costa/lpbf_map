@@ -1,0 +1,9 @@
+{
+    "name": "Ti-6Al-4V",
+    "density": 4250,
+    "specific_heat": 745,
+    "thermal_conductivity": 38,
+    "boiling_temperature": 3560,
+    "melting_temperature": 1877,
+    "absorptivity": 0.60
+}

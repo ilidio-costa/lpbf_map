@@ -1,0 +1,9 @@
+{
+    "name": "MoNbTaW",
+    "density": 13114,
+    "specific_heat": 314.06,
+    "thermal_conductivity": 45.51,
+    "boiling_temperature": 5397.5,
+    "melting_temperature": 3123.5,
+    "absorptivity": 0.40
+}

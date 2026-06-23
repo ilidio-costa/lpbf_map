@@ -1,0 +1,10 @@
+{
+    "name": "Al6061",
+    "density": 2700,
+    "specific_heat": 834.32,
+    "thermal_conductivity": 331.84,
+    "boiling_temperature": 2350,
+    "melting_temperature": 923,
+    "absorptivity": 0.13,
+    "electrical_resistivity": 4.4e-8
+}
