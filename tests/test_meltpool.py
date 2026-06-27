@@ -1,7 +1,7 @@
 import pytest
-from lpbf_maps.materials import Material
-from lpbf_maps.parameters import ProcessParameters
-from lpbf_maps.meltpool import MeltPool
+from lpbf_map.materials import Material
+from lpbf_map.parameters import ProcessParameters
+from lpbf_map.meltpool import MeltPool
 
 def test_melt_pool_initialization():
     mat = Material.from_library("Ti64")

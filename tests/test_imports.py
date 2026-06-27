@@ -1,5 +1,5 @@
 import pytest
 
 def test_package_import():
-    import lpbf_maps
-    assert lpbf_maps.__version__ == "0.1.0"
+    import lpbf_map
+    assert lpbf_map.__version__ == "0.1.0"

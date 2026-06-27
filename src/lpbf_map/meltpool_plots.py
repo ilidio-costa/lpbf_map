@@ -11,6 +11,8 @@ from .meltpool import (
     _calculate_rubenchik_meltpool_dimensions
 )
 
+from .units import get_parameter_formatting
+
 def plot_dimensions_2d(x_grid: np.ndarray, y_grid: np.ndarray, 
                        length_grid: np.ndarray, width_grid: np.ndarray, depth_grid: np.ndarray,
                        x_label: str, y_label: str, save_path: Optional[str] = None):
@@ -174,8 +176,9 @@ def plot_thermal_views(melt_pool: MeltPool, view_type: str = 'side', save_path: 
     elif n_rows == 1: axes = axes.reshape(1, -1)
     elif n_cols == 1: axes = axes.reshape(-1, 1)
 
-    title_view = "Top" if view_type == 'top' else "Side"
-    fig.suptitle(f"{melt_pool.material.name} Melt Pool {title_view} Views", fontsize=16)
+    is_single = len(melt_pool.shape) == 0 or np.prod(melt_pool.shape) == 1
+    title_view_suffix = "View" if is_single else "Views"
+    fig.suptitle(f"{melt_pool.material.name} Melt Pool {view_type.title()} {title_view_suffix}", fontsize=16)
 
     X_grid = np.linspace(x_min, x_max, resolution)
     Y_grid = np.linspace(y_min, y_max, resolution) if view_type == 'top' else np.zeros(resolution)
@@ -235,8 +238,26 @@ def plot_thermal_views(melt_pool: MeltPool, view_type: str = 'side', save_path: 
                 if L_i == 0:
                     dim_lbl = "No Melt Pool"
                     
-                title = f"P={p_val.laser_power:.0f}W, v={p_val.scan_speed:.2f}m/s\n{dim_lbl}"
-                ax.set_title(title, fontsize=10 if is_grid else 12)
+                dynamic_title_parts = []
+                for prop in ['density', 'specific_heat', 'thermal_conductivity', 'melting_temperature', 'boiling_temperature', 'absorptivity', 'thermal_diffusivity']:
+                    val = getattr(melt_pool.material, prop, None)
+                    if val is not None and np.asarray(val).size > 1:
+                        prop_val = float(np.broadcast_to(val, melt_pool.shape)[idx] if is_grid else val)
+                        human_name, unit, scale = get_parameter_formatting(prop)
+                        dynamic_title_parts.append(f"{human_name}: {prop_val*scale:.3g} {unit}".strip())
+                        
+                for prop in ['laser_power', 'scan_speed', 'beam_radius', 'hatch_spacing', 'layer_thickness', 'ambient_temperature']:
+                    val = getattr(melt_pool.parameters, prop, None)
+                    if val is not None and np.asarray(val).size > 1:
+                        prop_val = float(np.broadcast_to(val, melt_pool.shape)[idx] if is_grid else val)
+                        human_name, unit, scale = get_parameter_formatting(prop)
+                        dynamic_title_parts.append(f"{human_name}: {prop_val*scale:.3g} {unit}".strip())
+                        
+                title_str = "\n".join(dynamic_title_parts)
+                if title_str:
+                    title_str += "\n"
+                title_str += dim_lbl
+                ax.set_title(title_str, fontsize=10 if is_grid else 12)
 
     sm = plt.cm.ScalarMappable(cmap='inferno', norm=plt.Normalize(vmin=tlims[0], vmax=tlims[1]))
     cbar = fig.colorbar(sm, ax=axes, location='right', aspect=30)
@@ -267,9 +288,12 @@ def plot_dimensions(melt_pool, sweep_axis: str, save_path: Optional[str] = None)
     W = melt_pool.width * 1e6
     D = melt_pool.depth * 1e6
     
-    ax.plot(x_data, L, 'r-o', label='Length')
-    ax.plot(x_data, W, 'g-s', label='Width')
-    ax.plot(x_data, D, 'b-^', label='Depth')
+    import matplotlib.cm as cm
+    colors = cm.inferno(np.linspace(0.3, 0.8, 3))
+    
+    ax.plot(x_data, L, '-o', color=colors[0], label='Length')
+    ax.plot(x_data, W, '-s', color=colors[1], label='Width')
+    ax.plot(x_data, D, '-^', color=colors[2], label='Depth')
     
     ax.set_xlabel(sweep_axis.replace('_', ' ').title(), fontsize=12)
     ax.set_ylabel(r'Dimension ($\mu m$)', fontsize=12)

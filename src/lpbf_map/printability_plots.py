@@ -10,6 +10,7 @@ def plot_2d_printability_map(x_grid: np.ndarray, y_grid: np.ndarray,
                              defect_map: np.ndarray, defect_labels: Dict[int, str],
                              x_label: str = "Scanning Velocity (m/s)",
                              y_label: str = "Laser Power (W)",
+                             title: str = "L-PBF Printability Map\nDeterministic Defect Boundaries",
                              save_path: Optional[str] = None):
     """
     Renders the Printability Space Map as a 2D plot.
@@ -48,7 +49,7 @@ def plot_2d_printability_map(x_grid: np.ndarray, y_grid: np.ndarray,
         # 3. Contour at the 50% threshold
         ax.contourf(x_grid, y_grid, smoothed_mask, levels=[0.5, 2.0], colors=[color], alpha=0.9)
 
-    ax.set_title("L-PBF Printability Map\nDeterministic Defect Boundaries", fontsize=16, fontweight='bold')
+    ax.set_title(title, fontsize=16, fontweight='bold')
     ax.set_xlabel(x_label, fontsize=14)
     ax.set_ylabel(y_label, fontsize=14)
 
@@ -57,6 +58,8 @@ def plot_2d_printability_map(x_grid: np.ndarray, y_grid: np.ndarray,
                for uid in unique_ids]
     ax.legend(handles=patches, loc='center left', bbox_to_anchor=(1.05, 0.5), framealpha=0.9)
 
+    ax.set_box_aspect(1)
+    
     plt.tight_layout()
 
     if save_path:
@@ -87,17 +90,21 @@ def plot_individual_defects_map(x_grid: np.ndarray, y_grid: np.ndarray,
         axes = np.array([axes])
     axes = axes.flatten()
     
-    colors_dict = {
-        1: '#f6d746', # Balling
-        2: '#e55c30', # Lack of Fusion
-        3: '#84206b', # Keyhole
-        4: '#2d7a5b', # Extra (Green)
-        5: '#5e4fa2', # Extra (Purple)
-    }
-    
+    colors_dict = {}
+    for uid in unique_ids:
+        lbl = defect_labels[uid].lower()
+        if 'balling' in lbl:
+            colors_dict[uid] = '#f6d746'
+        elif 'lackoffusion' in lbl or 'lack of fusion' in lbl:
+            colors_dict[uid] = '#e55c30'
+        elif 'keyhole' in lbl:
+            colors_dict[uid] = '#84206b'
+        else:
+            colors_dict[uid] = '#333333'
+            
     for idx, uid in enumerate(unique_ids):
         ax = axes[idx]
-        color = colors_dict.get(uid, '#e55c30')
+        color = colors_dict.get(uid, '#333333')
         label = defect_labels.get(uid, f"Defect {uid}")
         
         defect_slice = individual_maps[uid]
@@ -106,6 +113,8 @@ def plot_individual_defects_map(x_grid: np.ndarray, y_grid: np.ndarray,
         if np.sum(binary_mask) > 0:
             smoothed_mask = gaussian_filter(binary_mask, sigma=1.0)
             ax.contourf(x_grid, y_grid, smoothed_mask, levels=[0.5, 2.0], colors=[color], alpha=0.9)
+        else:
+            ax.text(0.5, 0.5, "No Defects Triggered", horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, color='gray', fontsize=12)
             
         ax.set_title(label, fontsize=14, fontweight='bold')
         ax.set_xlabel(x_label, fontsize=12)
@@ -124,6 +133,8 @@ def plot_individual_defects_map(x_grid: np.ndarray, y_grid: np.ndarray,
 def plot_3d_safe_zone_evolution(x_grid: np.ndarray, y_grid: np.ndarray, z_grid: np.ndarray, 
                                 defect_map_3d: np.ndarray, z_var_name: str, 
                                 defect_labels: Dict[int, str],
+                                x_label: str = "Scanning Velocity (m/s)",
+                                y_label: str = "Laser Power (W)",
                                 save_path: Optional[str] = None):
     """
     Plots a 3D deterministic map showing the evolution of the Safe Zone.
@@ -133,13 +144,9 @@ def plot_3d_safe_zone_evolution(x_grid: np.ndarray, y_grid: np.ndarray, z_grid: 
     ax = fig.add_subplot(111, projection='3d')
     
     # Formatting
-    format_map = {
-        'beam_radius': ('Laser Beam Radius (µm)', 1e6),
-        'ambient_temperature': ('Ambient Temperature (K)', 1.0),
-        'hatch_spacing': ('Hatch Spacing (µm)', 1e6),
-        'layer_thickness': ('Layer Thickness (µm)', 1e6),
-    }
-    z_label, z_scale = format_map.get(z_var_name, (z_var_name, 1.0))
+    from .units import get_parameter_formatting
+    z_name, z_unit, z_scale = get_parameter_formatting(z_var_name)
+    z_label = f"{z_name} ({z_unit})" if z_unit else z_name
 
     colors_dict = {
         0: '#140b34', # Safe Zone
@@ -176,8 +183,8 @@ def plot_3d_safe_zone_evolution(x_grid: np.ndarray, y_grid: np.ndarray, z_grid: 
         slice_idx = np.where(z_array_1d == z_val)[0][0]
         
         # Extract 2D slice by taking along the Z axis
-        laser_power_slice = np.take(x_grid, slice_idx, axis=z_axis_idx)
-        scan_speed_slice = np.take(y_grid, slice_idx, axis=z_axis_idx)
+        x_slice = np.take(x_grid, slice_idx, axis=z_axis_idx)
+        y_slice = np.take(y_grid, slice_idx, axis=z_axis_idx)
         defect_slice = np.take(defect_map_3d, slice_idx, axis=z_axis_idx)
 
         if idx == 0:
@@ -187,19 +194,19 @@ def plot_3d_safe_zone_evolution(x_grid: np.ndarray, y_grid: np.ndarray, z_grid: 
                 binary_mask = (defect_slice == uid).astype(float)
                 if np.sum(binary_mask) == 0: continue
                 smoothed_mask = gaussian_filter(binary_mask, sigma=1.0)
-                ax.contourf(scan_speed_slice, laser_power_slice, smoothed_mask, levels=[0.5, 2.0], 
+                ax.contourf(x_slice, y_slice, smoothed_mask, levels=[0.5, 2.0], 
                             colors=[color], alpha=0.9, zdir='z', offset=z_plot_offset)
         else:
             # Higher layers: plot safe zone only
             binary_mask = (defect_slice == 0).astype(float)
             if np.sum(binary_mask) > 0:
                 smoothed_mask = gaussian_filter(binary_mask, sigma=1.0)
-                ax.contourf(scan_speed_slice, laser_power_slice, smoothed_mask, levels=[0.5, 2.0], 
+                ax.contourf(x_slice, y_slice, smoothed_mask, levels=[0.5, 2.0], 
                             colors=[colors_dict[0]], alpha=0.35, zdir='z', offset=z_plot_offset)
 
     ax.set_title(f"Safe Zone Evolution vs {z_label.split('(')[0]}", fontsize=14, pad=20)
-    ax.set_xlabel("Scanning Velocity (m/s)", fontsize=12, labelpad=10)
-    ax.set_ylabel("Laser Power (W)", fontsize=12, labelpad=10)
+    ax.set_xlabel(x_label, fontsize=12, labelpad=10)
+    ax.set_ylabel(y_label, fontsize=12, labelpad=10)
     ax.set_zlabel(z_label, fontsize=12, labelpad=10)
     
     ax.set_zlim(z_unique[0] * z_scale, z_unique[-1] * z_scale * 1.05)
@@ -208,6 +215,54 @@ def plot_3d_safe_zone_evolution(x_grid: np.ndarray, y_grid: np.ndarray, z_grid: 
     ax.legend(handles=patches, loc='center left', bbox_to_anchor=(1.1, 0.5), framealpha=0.9)
     ax.view_init(elev=25, azim=-45)
     
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        
+    return fig, ax
+
+def plot_criterion_sweep_map(x_grid: np.ndarray, y_grid: np.ndarray,
+                             sweep_maps: dict, criterion_name: str,
+                             x_label: str = "Scanning Velocity (m/s)",
+                             y_label: str = "Laser Power (W)",
+                             save_path: str = None):
+    """
+    Plots a stair-like parameter sweep map for a specific criterion evaluated across multiple thresholds.
+    """
+    fig, ax = plt.subplots(figsize=(8, 8))
+    
+    thresholds = sorted(list(sweep_maps.keys()))
+    
+    # Use a colormap to generate sequential colors
+    cmap = plt.cm.inferno
+    colors = [cmap(i) for i in np.linspace(0.2, 0.9, len(thresholds))]
+    
+    for idx, th in enumerate(thresholds):
+        single_map = sweep_maps[th]
+        binary_mask = (single_map == 1).astype(float)
+        
+        # Only plot if there's an actual boundary to draw
+        if np.sum(binary_mask) == 0:
+            continue
+            
+        from scipy.ndimage import gaussian_filter
+        smoothed_mask = gaussian_filter(binary_mask, sigma=1.0)
+        
+        # Plot filled contour
+        ax.contourf(x_grid, y_grid, smoothed_mask, levels=[0.5, 2.0], colors=[colors[idx]], alpha=0.6)
+        
+        # Plot outline contour
+        ax.contour(x_grid, y_grid, smoothed_mask, levels=[0.5], colors=[colors[idx]], linewidths=2.0)
+        
+    ax.set_box_aspect(1)
+    ax.set_title(f"{criterion_name} Parameter Sweep", fontsize=16, fontweight='bold')
+    ax.set_xlabel(x_label, fontsize=14)
+    ax.set_ylabel(y_label, fontsize=14)
+    
+    import matplotlib.patches as mpatches
+    patches = [mpatches.Patch(color=colors[idx], label=f"Threshold = {th}") for idx, th in enumerate(thresholds)]
+    ax.legend(handles=patches, loc='center left', bbox_to_anchor=(1.05, 0.5), framealpha=0.9)
+    
+    plt.tight_layout()
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         

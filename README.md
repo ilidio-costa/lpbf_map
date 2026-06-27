@@ -2,11 +2,11 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![v0.1.0](https://img.shields.io/badge/version-0.1.0-yellow.svg)](https://github.com/ilidio-costa/L-PBF-Processing-Maps-Predictive-Analytical-Modelling/releases)
 
-# lpbf_maps
+# lpbf_map
 ### Predictive Modeling Of L-PBF Printability Maps
 
 <div align="center">
-  <img src="images/Logo_LPBF.png" alt="L-PBF Processing Maps Logo" width="200">
+  <img src="images/Logo_lpbf_map.png" alt="L-PBF Processing Maps Logo" width="200">
 </div>
 
 ## Scientific Overview
@@ -25,7 +25,7 @@ pip install -e .
 
 ### 2. Minimal Example
 ```python
-from lpbf_maps import Material, ProcessParameters, MeltPool
+from lpbf_map import Material, ProcessParameters, MeltPool
 
 # Load a material from the built-in database
 material = Material.from_library("Ti64")
@@ -102,8 +102,8 @@ pool.plot_side_view()                   # Thermal cross-section visualization
 Evaluates a full parameter grid through the `DefectSuite` rules engine to classify every coordinate as Safe or Defective.
 
 ```python
-from lpbf_maps import PrintabilitySpace
-from lpbf_maps.defects import DefectSuite, BallingPlateauRayleighCriterion, LackOfFusionCriterion
+from lpbf_map import PrintabilitySpace
+from lpbf_map.defects import DefectSuite, BallingPlateauRayleighCriterion, LackOfFusionCriterion
 
 suite = DefectSuite()
 suite.add(1, BallingPlateauRayleighCriterion())
@@ -125,7 +125,7 @@ space.plot_2d()
 
 ### Defect Evaluation Criteria
 
-Each defect criterion is encapsulated within an isolated Python module in `src/lpbf_maps/defects/` and adheres to a standardized API. This modularity allows the framework to evaluate each physical instability independently.
+Each defect criterion is encapsulated within an isolated Python module in `src/lpbf_map/defects/` and adheres to a standardized API. This modularity allows the framework to evaluate each physical instability independently.
 
 | Defect Type | Analytical Model | Module | Defect Condition (Returns `True`) |
 | :--- | :--- | :--- | :--- |
@@ -145,24 +145,34 @@ Each defect criterion is encapsulated within an isolated Python module in `src/l
 
 ### 2D Printability Map
 <div align="center">
-  <img src="images/printability_map.png" alt="printability_map" width="450">
+  <img src="examples/plots/ti64_printability_map.png" alt="printability_map" width="450">
+</div>
+
+### All Defects Overlay
+<div align="center">
+  <img src="examples/plots/ti64_all_defects_map.png" alt="all_defects_map" width="450">
 </div>
 
 ### 3D Safe Zone Evolution
 <div align="center">
-  <img src="images/printability_map_z_axis.png" alt="printability_map_z_axis" width="450">
+  <img src="examples/plots/ti64_3d_beam_radius.png" alt="3d_safe_zone" width="450">
 </div>
 
 ### Melt Pool Thermal Cross-Section
 <div align="center">
-  <img src="images/eagar_tsai.png" alt="melt pool" width="450">
+  <img src="examples/plots/grid_meltpool_side_view.png" alt="melt_pool_grid" width="450">
+</div>
+
+### Melt Pool Dimensions Sweep
+<div align="center">
+  <img src="examples/plots/2d_dimensions.png" alt="melt_pool_dimensions" width="450">
 </div>
 
 ---
 
 ## Material Database
 
-Materials are stored as JSON files in `src/lpbf_maps/database/` and shipped with the package. To add a new material, create a JSON file following this structure:
+Materials are stored as JSON files in `src/lpbf_map/database/` and shipped with the package. To add a new material, create a JSON file following this structure:
 
 ```json
 {
@@ -212,7 +222,7 @@ Mathematical shorthand is permitted only as local variables inside solver scopes
 ## Project Structure
 
 ```
-├── src/lpbf_maps/              # Main package
+├── src/lpbf_map/               # Main package
 │   ├── __init__.py             # Public API exports
 │   ├── materials.py            # Material class + factory pattern
 │   ├── parameters.py           # ProcessParameters class

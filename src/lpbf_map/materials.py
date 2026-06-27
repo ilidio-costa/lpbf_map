@@ -116,7 +116,7 @@ class Material:
             
         try:
             # Using importlib.resources to guarantee resolution even when pip-installed
-            with importlib.resources.open_text('lpbf_maps.database', filename) as f:
+            with importlib.resources.open_text('lpbf_map.database', filename) as f:
                 data = json.load(f)
                 
             return cls(
@@ -151,3 +151,32 @@ class Material:
             thermal_diffusivity=data.get("thermal_diffusivity", data.get("alpha")),
             electrical_resistivity=data.get("electrical_resistivity", data.get("rho_e"))
         )
+
+    def plot_absorptivity_models(self, wavelengths: np.ndarray = None, save_path: str = None):
+        """
+        Evaluates and plots all 5 mathematical models of absorptivity over a range of wavelengths.
+        """
+        import matplotlib.pyplot as plt
+        if wavelengths is None:
+            wavelengths = np.linspace(0.5e-6, 2.0e-6, 50)
+            
+        models = ['hagen_rubens', 'gusarov_smurov', 'boley_hex', 'boley_gaussian', 'boley_bimodal']
+        labels = ['Hagen-Rubens', 'Gusarov-Smurov', 'Boley (Hexagonal)', 'Boley (Gaussian)', 'Boley (Bimodal)']
+        
+        fig, ax = plt.subplots(figsize=(8, 5))
+        cmap = plt.cm.inferno
+        colors = [cmap(i) for i in np.linspace(0.15, 0.85, len(models))]
+        for m, lbl, color in zip(models, labels, colors):
+            self.calculate_absorptivity(wavelengths, method=m)
+            ax.plot(wavelengths * 1e9, self.absorptivity * 100, label=lbl, linewidth=2, color=color)
+            
+        ax.set_title(f"Absorptivity Models for {self.name}", fontsize=14, fontweight='bold')
+        ax.set_xlabel("Wavelength (nm)", fontsize=12)
+        ax.set_ylabel("Absorptivity (%)", fontsize=12)
+        ax.grid(True, linestyle='--', alpha=0.7)
+        ax.legend()
+        plt.tight_layout()
+        
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        return fig, ax

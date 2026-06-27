@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lpbf-maps"
+name = "lpbf-map"
 version = "0.1.0"
 authors = [
   { name="Ilidio Costa" },
@@ -38,10 +38,10 @@ dev = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["lpbf_maps", "lpbf_maps.defects", "lpbf_maps.database"]
+packages = ["lpbf_map", "lpbf_map.defects", "lpbf_map.database"]
 
 [tool.setuptools.package-data]
-"lpbf_maps.database" = ["*.json"]
+"lpbf_map.database" = ["*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

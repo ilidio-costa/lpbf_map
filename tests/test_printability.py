@@ -1,10 +1,10 @@
 import pytest
 import numpy as np
-from lpbf_maps.materials import Material
-from lpbf_maps.parameters import ProcessParameters
-from lpbf_maps.printability import PrintabilitySpace
-from lpbf_maps.defects.base import DefectSuite
-from lpbf_maps.meltpool import MeltPool
+from lpbf_map.materials import Material
+from lpbf_map.parameters import ProcessParameters
+from lpbf_map.printability import PrintabilitySpace
+from lpbf_map.defects.base import DefectSuite
+from lpbf_map.meltpool import MeltPool
 import os
 
 def test_printability_space_orchestration():

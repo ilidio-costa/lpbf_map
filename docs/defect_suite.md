@@ -1,6 +1,6 @@
 # Defect Suite API
 
-The `lpbf_maps` package uses a highly modular plugin system for evaluating printability defects. Instead of hardcoding complex conditional logic into a central loop, the library uses the **DefectSuite** to orchestrate independent **DefectCriterion** plugins.
+The `lpbf_map` package uses a highly modular plugin system for evaluating printability defects. Instead of hardcoding complex conditional logic into a central loop, the library uses the **DefectSuite** to orchestrate independent **DefectCriterion** plugins.
 
 This design gives you the freedom to easily swap, combine, or invent new physical defect criteria without modifying the core simulation engine.
 
@@ -34,7 +34,7 @@ To write your own physical rule, inherit from `DefectCriterion`, use `get_proper
 Here is an example of a custom defect that checks if the local volumetric energy density exceeds a critical threshold:
 
 ```python
-from lpbf_maps.defects.base import DefectCriterion
+from lpbf_map.defects.base import DefectCriterion
 
 class ExcessiveEnergyCriterion(DefectCriterion):
     def __init__(self, max_energy_density: float = 1e9):
@@ -61,9 +61,9 @@ The `DefectSuite` acts as the orchestrator. When you add criteria to the suite, 
 When evaluating a coordinate, the suite checks criteria in ascending order of their Priority ID (e.g., ID `1` is checked before ID `2`). As soon as a criterion returns `True`, the suite immediately assigns that ID to the coordinate and stops checking. If no criteria return `True`, the coordinate is assigned `0` (Safe).
 
 ```python
-from lpbf_maps.defects.base import DefectSuite
-from lpbf_maps.defects.lof import LackOfFusionCriterion
-from lpbf_maps.defects.keyhole_gan import KeyholeGanCriterion
+from lpbf_map.defects.base import DefectSuite
+from lpbf_map.defects.lof import LackOfFusionCriterion
+from lpbf_map.defects.keyhole_gan import KeyholeGanCriterion
 
 # Create the suite
 suite = DefectSuite()

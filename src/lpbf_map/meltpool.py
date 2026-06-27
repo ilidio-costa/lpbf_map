@@ -311,6 +311,7 @@ class MeltPool:
     """
     material: Material
     parameters: ProcessParameters
+    custom_dimensions: Optional[Tuple[np.ndarray, np.ndarray, np.ndarray]] = None
     
     # Internal cache for lazy properties
     _cached_dimensions: Optional[Tuple[np.ndarray, np.ndarray, np.ndarray]] = None
@@ -405,10 +406,14 @@ class MeltPool:
     @property
     def dimensions(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Returns (length, width, depth) arrays matching the parameters shape.
-        Executes physics solvers only once, caching the results.
+        Lazily computes and returns the (length, width, depth) grids.
+        If custom_dimensions was provided during initialisation, it bypasses the solvers and returns them directly.
         """
         if self._cached_dimensions is not None:
+            return self._cached_dimensions
+            
+        if self.custom_dimensions is not None:
+            self._cached_dimensions = self.custom_dimensions
             return self._cached_dimensions
 
         shape = self.shape
@@ -461,6 +466,19 @@ class MeltPool:
         r = self.parameters.beam_radius
         
         result = (A * P) / (np.pi * rho * C_p * T_m * np.sqrt(alpha * v * (r**3)))
+        return np.broadcast_to(result, self.shape)
+
+    @property
+    def dwell_time_ratio(self) -> np.ndarray:
+        """
+        Returns the dwell time ratio parameter (p).
+        Formula: alpha / (v * r)
+        """
+        alpha = self.material.thermal_diffusivity
+        v = self.parameters.scan_speed
+        r = self.parameters.beam_radius
+        
+        result = alpha / (v * r)
         return np.broadcast_to(result, self.shape)
 
     def plot_side_view(self, save_path: Optional[str] = None, resolution: int = 100, remove_background: bool = False):

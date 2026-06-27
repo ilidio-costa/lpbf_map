@@ -131,17 +131,26 @@ class PrintabilitySpace:
         """
         from .printability_plots import plot_2d_printability_map
 
+        from .units import format_parameter_label
+        
         x_grid, y_grid, defect_slice = self.slice_2d(x_axis, y_axis, fixed_indices)
 
         # Build human-readable axis labels from the parameter names
-        x_label = x_axis.replace('_', ' ').title()
-        y_label = y_axis.replace('_', ' ').title()
+        from .units import get_parameter_formatting
+        x_name, x_unit, x_scale = get_parameter_formatting(x_axis)
+        y_name, y_unit, y_scale = get_parameter_formatting(y_axis)
+        x_label = f"{x_name} ({x_unit})" if x_unit else x_name
+        y_label = f"{y_name} ({y_unit})" if y_unit else y_name
+        x_grid = x_grid * x_scale
+        y_grid = y_grid * y_scale
+        title = f"{self.melt_pool.material.name} Printability Map"
 
         return plot_2d_printability_map(
             x_grid=x_grid,
             y_grid=y_grid,
             x_label=x_label,
             y_label=y_label,
+            title=title,
             defect_map=defect_slice,
             defect_labels=self.defect_labels,
             save_path=save_path
@@ -153,10 +162,17 @@ class PrintabilitySpace:
         """
         from .printability_plots import plot_individual_defects_map
         
+        from .units import format_parameter_label
+        
         x_grid, y_grid, _ = self.slice_2d(x_axis, y_axis, fixed_indices)
         
-        x_label = x_axis.replace('_', ' ').title()
-        y_label = y_axis.replace('_', ' ').title()
+        from .units import get_parameter_formatting
+        x_name, x_unit, x_scale = get_parameter_formatting(x_axis)
+        y_name, y_unit, y_scale = get_parameter_formatting(y_axis)
+        x_label = f"{x_name} ({x_unit})" if x_unit else x_name
+        y_label = f"{y_name} ({y_unit})" if y_unit else y_name
+        x_grid = x_grid * x_scale
+        y_grid = y_grid * y_scale
         
         shape = self.melt_pool.shape
         ndim = len(shape)
@@ -213,13 +229,70 @@ class PrintabilitySpace:
         y_grid = np.broadcast_to(y_grid_raw, shape)
         z_grid = np.broadcast_to(z_grid_raw, shape)
         
-        # The plotter expects (laser_power_grid, scan_speed_grid, z_grid...)
+        from .units import format_parameter_label
+        
+        from .units import get_parameter_formatting
+        x_name, x_unit, x_scale = get_parameter_formatting(x_axis)
+        y_name, y_unit, y_scale = get_parameter_formatting(y_axis)
+        x_label = f"{x_name} ({x_unit})" if x_unit else x_name
+        y_label = f"{y_name} ({y_unit})" if y_unit else y_name
+        x_grid = x_grid * x_scale
+        y_grid = y_grid * y_scale
+
         return plot_3d_safe_zone_evolution(
-            x_grid=y_grid, # laser power
-            y_grid=x_grid, # scan speed
+            x_grid=x_grid, 
+            y_grid=y_grid, 
             z_grid=z_grid,
             defect_map_3d=self.defect_map,
             z_var_name=z_axis,
             defect_labels=self.defect_labels,
+            x_label=x_label,
+            y_label=y_label,
+            save_path=save_path
+        )
+
+    def plot_criterion_sweep(self, criterion_class: type, thresholds: list[float], x_axis: str, y_axis: str, fixed_indices: Optional[dict] = None, save_path: Optional[str] = None):
+        """
+        Plots a parameter sweep for a single criterion across multiple threshold values, creating a stepped visualization of the boundary.
+        """
+        from .printability_plots import plot_criterion_sweep_map
+        from .units import get_parameter_formatting
+        
+        x_grid, y_grid, _ = self.slice_2d(x_axis, y_axis, fixed_indices)
+        
+        x_name, x_unit, x_scale = get_parameter_formatting(x_axis)
+        y_name, y_unit, y_scale = get_parameter_formatting(y_axis)
+        x_label = f"{x_name} ({x_unit})" if x_unit else x_name
+        y_label = f"{y_name} ({y_unit})" if y_unit else y_name
+        x_grid = x_grid * x_scale
+        y_grid = y_grid * y_scale
+        
+        shape = self.melt_pool.shape
+        ndim = len(shape)
+        if fixed_indices is None:
+            fixed_indices = {}
+            
+        sweep_maps = {}
+        for th in thresholds:
+            criterion = criterion_class(threshold=th)
+            single_map = np.zeros(shape, dtype=int)
+            for idx in np.ndindex(shape):
+                if criterion.check(self.melt_pool, idx):
+                    single_map[idx] = 1
+            
+            slice_obj = [slice(None)] * ndim
+            for dim, bin_idx in fixed_indices.items():
+                slice_obj[dim] = bin_idx
+            slice_obj = tuple(slice_obj)
+            
+            sweep_maps[th] = single_map[slice_obj]
+            
+        return plot_criterion_sweep_map(
+            x_grid=x_grid,
+            y_grid=y_grid,
+            sweep_maps=sweep_maps,
+            criterion_name=criterion_class.__name__.replace('Criterion', ''),
+            x_label=x_label,
+            y_label=y_label,
             save_path=save_path
         )

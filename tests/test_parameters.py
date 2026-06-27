@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from lpbf_maps.parameters import ProcessParameters
+from lpbf_map.parameters import ProcessParameters
 
 def test_parameters_initialization_single():
     params = ProcessParameters(

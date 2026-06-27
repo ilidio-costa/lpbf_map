@@ -1,6 +1,6 @@
 # Architecture and Object Reference
 
-This document provides a detailed breakdown of the `lpbf_printability` library's core architecture and object-oriented design.
+This document provides a detailed breakdown of the `lpbf_map` library's core architecture and object-oriented design.
 
 ## System Flowchart
 
@@ -59,6 +59,7 @@ All numeric fields support `float` or vectorized `np.ndarray` inputs.
 * `boiling_temperature` (float | np.ndarray): Boiling point in $K$.
 * `absorptivity` (float | np.ndarray): Baseline optical absorptivity coefficient (0-1).
 * `thermal_diffusivity` (float | np.ndarray | None): Automatically computed based on $k / (\rho \cdot c_p)$ in $m^2/s$ if not provided.
+* `electrical_resistivity` (float | np.ndarray | None): Electrical resistivity in $\Omega \cdot m$. Used by the Hagen-Rubens model to compute absorptivity.
 
 ### Methods
 * `calculate_absorptivity(method: str = 'hagen-rubens', **kwargs)`: Updates `self.absorptivity` based on wavelength and electrical resistivity.
@@ -108,17 +109,25 @@ pool = MeltPool(material=material, parameters=params)
 * `width` (np.ndarray): The full lateral width of the melt pool in $m$.
 * `depth` (np.ndarray): The maximum penetration depth into the substrate in $m$.
 * `dimensions` (tuple): Returns a 3-tuple `(length, width, depth)` arrays. Evaluates the physics engines the first time it is called.
+* `normalized_enthalpy` (np.ndarray): The King's Normalized Enthalpy matrix.
+* `dwell_time_ratio` (np.ndarray): The dwell time ratio parameter (p).
+* `custom_dimensions` (tuple | None): Optional pre-computed dimensions to bypass solvers.
+
+### Methods
+* `get_property(name: str, idx: tuple = None)`: Safely extracts a scalar value or array from the underlying Material or ProcessParameters based on the provided index.
 
 ### Methods (Bridge Pattern Visualizers)
 * `plot_side_view(save_path=None, resolution=100, remove_background=False)`: Plots a high-fidelity thermal contour map of the XZ plane. Automatically plots a grid of maps if `params` are vectorized.
 * `plot_top_view(save_path=None, resolution=100, remove_background=False)`: Plots a high-fidelity thermal contour map of the XY plane.
+* `plot_dimensions(sweep_axis: str, save_path=None)`: Plots the melt pool dimensions against a 1D parameter sweep.
+* `plot_dimensions_2d(x_axis: str, y_axis: str, fixed_indices=None, save_path=None)`: Plots a 2D contour map of Length, Width, and Depth.
 
 ---
 
 ## 4. `DefectSuite` & `DefectCriterion`
 **Purpose**: Decoupled rules engine defining physical limitations. Each `DefectCriterion` enforces a specific boundary condition. `DefectSuite` chains them together by priority.
 
-**Note**: Defect classes are **not** exported from the top-level package and must be imported directly from `lpbf_printability.defects`.
+**Note**: Defect classes are **not** exported from the top-level package and must be imported directly from `lpbf_map.defects`.
 
 ### Available Criteria
 * `LackOfFusionCriterion()`: Ensures depth exceeds layer thickness based on geometric hatch spacing overlap.
@@ -132,7 +141,7 @@ pool = MeltPool(material=material, parameters=params)
 
 ### Initialization
 ```python
-from lpbf_printability.defects import DefectSuite, BallingYadroitsevCriterion, LackOfFusionCriterion
+from lpbf_map.defects import DefectSuite, BallingYadroitsevCriterion, LackOfFusionCriterion
 
 suite = DefectSuite()
 suite.add(1, BallingYadroitsevCriterion())

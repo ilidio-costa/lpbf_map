@@ -1,5 +1,5 @@
 import pytest
-from lpbf_maps.materials import Material
+from lpbf_map.materials import Material
 
 def test_material_initialization():
     mat = Material(
