@@ -90,6 +90,9 @@ params = ProcessParameters(
 * `wavelength` (float | np.ndarray | None): Laser wavelength in $m$. Used to compute absorptivity via the Hagen-Rubens model. Defaults to `None`.
 * `shape` (tuple): The N-dimensional grid shape resulting from broadcasting arrays (instance attribute).
 * `is_vectorized` (bool): True if parameters evaluate a multidimensional space (computed property).
+* `linear_energy_density` (np.ndarray): Linear Energy Density ($LED$) in $J/m$.
+* `areal_energy_density` (np.ndarray | None): Areal Energy Density ($AED$) in $J/m^2$. `None` if `hatch_spacing` is missing.
+* `volumetric_energy_density` (np.ndarray | None): Volumetric Energy Density ($VED$) in $J/m^3$. `None` if `hatch_spacing` or `layer_thickness` is missing.
 
 ### Methods
 * `get_point(index_tuple: tuple) -> ProcessParameters`: Extracts a single scalar `ProcessParameters` object from a specific point in the N-dimensional space.

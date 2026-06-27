@@ -63,6 +63,36 @@ class ProcessParameters:
         """ Returns true if parameters are configured as an N-dimensional grid. """
         return len(self.shape) > 0
 
+    @property
+    def linear_energy_density(self) -> np.ndarray:
+        """
+        Returns the Linear Energy Density (LED) in J/m.
+        Formula: P / v
+        """
+        return self.laser_power / self.scan_speed
+
+    @property
+    def areal_energy_density(self) -> Optional[np.ndarray]:
+        """
+        Returns the Areal Energy Density (AED) in J/m^2.
+        Formula: P / (v * h)
+        Returns None if hatch_spacing is not defined.
+        """
+        if self.hatch_spacing is None:
+            return None
+        return self.laser_power / (self.scan_speed * self.hatch_spacing)
+
+    @property
+    def volumetric_energy_density(self) -> Optional[np.ndarray]:
+        """
+        Returns the Volumetric Energy Density (VED) in J/m^3.
+        Formula: P / (v * h * t)
+        Returns None if hatch_spacing or layer_thickness is not defined.
+        """
+        if self.hatch_spacing is None or self.layer_thickness is None:
+            return None
+        return self.laser_power / (self.scan_speed * self.hatch_spacing * self.layer_thickness)
+
     def get_point(self, index_tuple: tuple) -> "ProcessParameters":
         """
         Extracts a single ProcessParameters object at the given ijk index tuple.
