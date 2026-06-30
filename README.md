@@ -153,6 +153,11 @@ Each defect criterion is encapsulated within an isolated Python module in `src/l
   <img src="examples/plots/ti64_all_defects_map.png" alt="all_defects_map" width="450">
 </div>
 
+### Defect Criterion Sweep
+<div align="center">
+  <img src="examples/plots/ti64_keyhole_geometric_sweep.png" alt="keyhole_geometric_sweep" width="450">
+</div>
+
 ### 3D Safe Zone Evolution
 <div align="center">
   <img src="examples/plots/ti64_3d_beam_radius.png" alt="3d_safe_zone" width="450">

@@ -125,7 +125,7 @@ class Material:
                 specific_heat=data.get("specific_heat", data.get("C_p")),
                 thermal_conductivity=data.get("thermal_conductivity", data.get("k")),
                 melting_temperature=data.get("melting_temperature", data.get("T_m")),
-                boiling_temperature=data.get("boiling_temperature", data.get("T_b", None)), 
+                boiling_temperature=data.get("boiling_temperature", data.get("T_b")), 
                 absorptivity=data.get("absorptivity", data.get("A")),
                 thermal_diffusivity=data.get("thermal_diffusivity", data.get("alpha")),
                 electrical_resistivity=data.get("electrical_resistivity", data.get("rho_e"))
@@ -146,7 +146,7 @@ class Material:
             specific_heat=data.get("specific_heat", data.get("C_p")),
             thermal_conductivity=data.get("thermal_conductivity", data.get("k")),
             melting_temperature=data.get("melting_temperature", data.get("T_m")),
-            boiling_temperature=data.get("boiling_temperature", data.get("T_b", None)),
+            boiling_temperature=data.get("boiling_temperature", data.get("T_b")),
             absorptivity=data.get("absorptivity", data.get("A")),
             thermal_diffusivity=data.get("thermal_diffusivity", data.get("alpha")),
             electrical_resistivity=data.get("electrical_resistivity", data.get("rho_e"))
