@@ -1,6 +1,7 @@
+[![PyPI version](https://badge.fury.io/py/lpbf-map.svg)](https://badge.fury.io/py/lpbf-map)
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![v0.1.0](https://img.shields.io/badge/version-0.1.0-yellow.svg)](https://github.com/ilidio-costa/lpbf_map/releases)
+[![v2.0.1](https://img.shields.io/badge/version-2.0.1-yellow.svg)](https://github.com/ilidio-costa/lpbf_map/releases)
 
 # lpbf_map
 ### Predictive Modeling Of L-PBF Printability Maps
@@ -16,7 +17,12 @@ The optimization of Laser Powder Bed Fusion (L-PBF) processing parameters is fre
 ## Quick Start
 
 ### 1. Installation
-Clone the repository and install the core dependencies:
+The easiest way to install the library is via PyPI:
+```bash
+pip install lpbf-map
+```
+
+*For developers:* Clone the repository and install in editable mode:
 ```bash
 git clone https://github.com/ilidio-costa/lpbf_map.git
 cd lpbf_map
